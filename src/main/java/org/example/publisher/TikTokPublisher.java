@@ -1,4 +1,4 @@
-package org.example;
+package org.example.publisher;
 
 import org.example.model.ScheduledPost;
 
