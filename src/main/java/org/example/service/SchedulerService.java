@@ -98,4 +98,23 @@ public class SchedulerService {
     public List<ScheduledPost> getPosts() {
         return posts;
     }
+
+    public void schedulePost(ScheduledPost post) {
+
+        long initialDelay = computeDelay(post.getPostTime());
+        long period = TimeUnit.DAYS.toMillis(1);
+
+
+        if(scheduler == null) {
+            throw new IllegalStateException("Scheduler is not running. Start it first.");
+        }
+
+
+        scheduler.scheduleAtFixedRate(() -> {
+            postToPlatform(post);
+        }, initialDelay, period, TimeUnit.MILLISECONDS);
+
+        System.out.println("New post scheduled: " + post + " in " + initialDelay / 1000 + " seconds");
+    }
+
 }

@@ -19,7 +19,7 @@ public class Dashboard extends JFrame {
         this.scheduler = scheduler;
 
         setTitle("Social Media Scheduler Dashboard");
-        setSize(600, 400);
+        setSize(1920, 1024);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // safe exit
         setLocationRelativeTo(null);
 
@@ -128,7 +128,8 @@ public class Dashboard extends JFrame {
                     ScheduledPost newPost = new ScheduledPost(platform, content, postTime);
 
                     scheduler.getPosts().add(newPost);
-                    listModel.addElement("[ADD] " + newPost.toString());
+                    scheduler.schedulePost(newPost);
+                    listModel.addElement("[SCHEDULED] " + newPost.toString());
 
                     JOptionPane.showMessageDialog(this, "Added new post");
                 }catch (Exception ex){
@@ -156,4 +157,7 @@ public class Dashboard extends JFrame {
             System.exit(0);
         }
     }
+
+
+
 }
