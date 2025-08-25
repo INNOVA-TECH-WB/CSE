@@ -238,9 +238,9 @@ public class Dashboard extends JFrame {
         }
     }
 
-//aaaaa
+
 
 }
 
 
-//// nina kocham cie
+// edit add remove should also make action in posts.json
