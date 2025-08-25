@@ -48,12 +48,20 @@ public class Dashboard extends JFrame {
         JButton reportButton = new JButton("📄 Generate Report");
         JButton exitButton = new JButton("🚪 Safe Exit");
         JButton addPostButton = new JButton("➕ Add Post");
+        JButton removePostButton = new JButton("🗑 Remove Post");
+        JButton editPostButton = new JButton("✏ Edit Post");
+        JButton refreshButton = new JButton("🔄 Refresh List");
+
 
         buttonPanel.add(startButton);
         buttonPanel.add(stopButton);
         buttonPanel.add(reportButton);
         buttonPanel.add(exitButton);
         buttonPanel.add(addPostButton);
+        buttonPanel.add(removePostButton);
+        buttonPanel.add(editPostButton);
+        buttonPanel.add(refreshButton);
+
 
         // status bar (bottom of window)
         statusLabel = new JLabel("Scheduler stopped", SwingConstants.LEFT);
@@ -144,6 +152,78 @@ public class Dashboard extends JFrame {
         exitButton.addActionListener(e -> safeExit());
 
         setVisible(true);
+
+
+        refreshButton.addActionListener(e -> {
+            listModel.clear();
+            for (ScheduledPost post : scheduler.getPosts()) {
+                listModel.addElement("[EXIT] " + post.toString());
+            }
+            JOptionPane.showMessageDialog(this, "Post list refreshed!");
+        });
+
+
+        removePostButton.addActionListener(e -> {
+            int index = postList.getSelectedIndex();
+            if(index >= 0){
+                ScheduledPost removed = scheduler.getPosts().remove(index);
+                listModel.removeElement(index);
+                JOptionPane.showMessageDialog(this, "Removed post"+ removed.toString());
+            }else {
+                JOptionPane.showMessageDialog(this, "No post selected");
+            }
+        });
+
+        editPostButton.addActionListener(e -> {
+            int index = postList.getSelectedIndex();
+            if(index >= 0){
+                ScheduledPost post = scheduler.getPosts().get(index);
+                JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok", "Instagram", "Facebook"});
+                platformBox.setSelectedItem(post.getPlatform());
+
+                JTextField contentField = new JTextField(post.getContent());
+                JTextField timeField = new JTextField(post.getPostTime().toString());
+                JPanel panel = new JPanel(new GridLayout(0, 1));
+                panel.add(new JLabel("Platform:"));
+                panel.add(platformBox);
+                panel.add(new JLabel("Content:"));
+                panel.add(contentField);
+                panel.add(new JLabel("Time (HH:mm):"));
+                panel.add(timeField);
+
+                int result = JOptionPane.showConfirmDialog(
+                        Dashboard.this, panel, "Edit Post", JOptionPane.OK_CANCEL_OPTION);
+                if(result == JOptionPane.OK_OPTION){
+                    try{
+                        String platform = (String) platformBox.getSelectedItem();
+                        String content = contentField.getText();
+                        java.time.LocalTime postTime = java.time.LocalTime.parse(timeField.getText());
+
+                        //update post
+                        post.setPlatform(platform);
+                        post.setContent(content);
+                        post.setPostTime(postTime);
+
+                        //refresh
+
+                        listModel.set(index,"[EDITED] " + post.toString());
+
+                        JOptionPane.showMessageDialog(this, "Edited post"+ post.toString());
+
+
+
+                    }catch (Exception ex){
+                        JOptionPane.showMessageDialog(Dashboard.this, "Invalid input: " + ex.getMessage());
+                    }
+                }
+            }else{
+                JOptionPane.showMessageDialog(this, "Please select a post to edit.");
+            }
+
+
+        });
+
+
     }
 
     private void safeExit() {

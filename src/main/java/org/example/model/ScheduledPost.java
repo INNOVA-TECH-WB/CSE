@@ -16,6 +16,17 @@ public class ScheduledPost {
     public String getContent() {
         return Content;
     }
+
+    public void setPlatform(String platform) {
+        Platform = platform;
+    }
+    public void setContent(String content) {
+        Content = content;
+    }
+    public void setPostTime(LocalTime postTime) {
+        PostTime = postTime;
+    }
+
     //public LocalTime getTime() {
       //  return PostTime;
     //}
@@ -29,3 +40,4 @@ public class ScheduledPost {
         return PostTime;
     }
 }
+
