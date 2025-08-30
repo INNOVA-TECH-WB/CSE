@@ -13,6 +13,8 @@ public class Dashboard extends JFrame {
     private final SchedulerService scheduler;
     private final DailyReportService reportService;
     private final JLabel statusLabel; // status bar label
+    private final DefaultListModel<String> listModel; // shared list model
+    private final JList<String> postList; // list UI
 
     public Dashboard(List<ScheduledPost> posts, SchedulerService scheduler, DailyReportService reportService) {
         this.reportService = reportService;
@@ -33,15 +35,15 @@ public class Dashboard extends JFrame {
 
         setLayout(new BorderLayout());
 
-        // list of posts
-        DefaultListModel<String> listModel = new DefaultListModel<>();
+        // --- POST LIST ---
+        listModel = new DefaultListModel<>();
         for (ScheduledPost post : posts) {
             listModel.addElement("[READY] " + post.toString());
         }
-        JList<String> postList = new JList<>(listModel);
+        postList = new JList<>(listModel);
         add(new JScrollPane(postList), BorderLayout.CENTER);
 
-        // buttons
+        // --- BUTTON PANEL ---
         JPanel buttonPanel = new JPanel();
         JButton startButton = new JButton("▶ Start Scheduler");
         JButton stopButton = new JButton("⏹ Stop Scheduler");
@@ -52,7 +54,6 @@ public class Dashboard extends JFrame {
         JButton editPostButton = new JButton("✏ Edit Post");
         JButton refreshButton = new JButton("🔄 Refresh List");
 
-
         buttonPanel.add(startButton);
         buttonPanel.add(stopButton);
         buttonPanel.add(reportButton);
@@ -62,8 +63,7 @@ public class Dashboard extends JFrame {
         buttonPanel.add(editPostButton);
         buttonPanel.add(refreshButton);
 
-
-        // status bar (bottom of window)
+        // --- STATUS BAR ---
         statusLabel = new JLabel("Scheduler stopped", SwingConstants.LEFT);
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         statusLabel.setForeground(Color.RED);
@@ -74,11 +74,43 @@ public class Dashboard extends JFrame {
 
         add(southPanel, BorderLayout.SOUTH);
 
-        // initial states
+        // --- MENU BAR ---
+        JMenuBar menubar = new JMenuBar();
+
+        // File menu
+        JMenu fileMenu = new JMenu("File");
+        JMenuItem exitItem = new JMenuItem("Exit");
+        JMenuItem reportItem = new JMenuItem("Generate Report");
+        fileMenu.add(reportItem);
+        fileMenu.add(exitItem);
+
+        // Settings menu
+        JMenu settingsMenu = new JMenu("Settings");
+        JMenuItem clearItem = new JMenuItem("Clear Posts");
+        JMenu themeMenu = new JMenu("Theme");
+        JMenuItem lightTheme = new JMenuItem("Light Theme");
+        JMenuItem darkTheme = new JMenuItem("Dark Theme");
+        themeMenu.add(lightTheme);
+        themeMenu.add(darkTheme);
+        settingsMenu.add(themeMenu);
+        settingsMenu.add(clearItem);
+
+        // Help menu
+        JMenu helpMenu = new JMenu("Help");
+        JMenuItem aboutItem = new JMenuItem("About");
+        helpMenu.add(aboutItem);
+
+        // Add menus
+        menubar.add(fileMenu);
+        menubar.add(settingsMenu);
+        menubar.add(helpMenu);
+        setJMenuBar(menubar);
+
+        // --- INITIAL STATES ---
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
 
-        // actions
+        // --- ACTIONS ---
         startButton.addActionListener(e -> {
             scheduler.start();
             startButton.setEnabled(false);
@@ -111,6 +143,7 @@ public class Dashboard extends JFrame {
             reportService.generateReport();
             JOptionPane.showMessageDialog(this, "Report generated");
         });
+
         addPostButton.addActionListener(e -> {
             JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok", "Instagram", "Facebook"});
             JTextField timeField = new JTextField("14:00"); // default time
@@ -124,10 +157,9 @@ public class Dashboard extends JFrame {
             panel.add(new JLabel("Time (HH:mm):"));
             panel.add(timeField);
 
-
-            int result = JOptionPane.showConfirmDialog(Dashboard.this,panel,"add new post",JOptionPane.OK_CANCEL_OPTION);
-            if(result == JOptionPane.OK_OPTION){
-                try{
+            int result = JOptionPane.showConfirmDialog(Dashboard.this, panel, "Add New Post", JOptionPane.OK_CANCEL_OPTION);
+            if (result == JOptionPane.OK_OPTION) {
+                try {
                     String platform = (String) platformBox.getSelectedItem();
                     String content = contentField.getText();
                     String timeText = timeField.getText();
@@ -139,50 +171,46 @@ public class Dashboard extends JFrame {
                     scheduler.schedulePost(newPost);
                     listModel.addElement("[SCHEDULED] " + newPost.toString());
 
+                    savePostsToJson();
                     JOptionPane.showMessageDialog(this, "Added new post");
-                }catch (Exception ex){
+                } catch (Exception ex) {
                     JOptionPane.showMessageDialog(Dashboard.this, "Invalid input: " + ex.getMessage());
                 }
             }
-
         });
 
-
-
         exitButton.addActionListener(e -> safeExit());
-
-        setVisible(true);
-
 
         refreshButton.addActionListener(e -> {
             listModel.clear();
             for (ScheduledPost post : scheduler.getPosts()) {
-                listModel.addElement("[EXIT] " + post.toString());
+                listModel.addElement("[REFRESHED] " + post.toString());
             }
             JOptionPane.showMessageDialog(this, "Post list refreshed!");
         });
 
-
         removePostButton.addActionListener(e -> {
             int index = postList.getSelectedIndex();
-            if(index >= 0){
+            if (index >= 0) {
                 ScheduledPost removed = scheduler.getPosts().remove(index);
-                listModel.removeElement(index);
-                JOptionPane.showMessageDialog(this, "Removed post"+ removed.toString());
-            }else {
+                listModel.remove(index);
+                savePostsToJson();
+                JOptionPane.showMessageDialog(this, "Removed post: " + removed.toString());
+            } else {
                 JOptionPane.showMessageDialog(this, "No post selected");
             }
         });
 
         editPostButton.addActionListener(e -> {
             int index = postList.getSelectedIndex();
-            if(index >= 0){
+            if (index >= 0) {
                 ScheduledPost post = scheduler.getPosts().get(index);
                 JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok", "Instagram", "Facebook"});
                 platformBox.setSelectedItem(post.getPlatform());
 
                 JTextField contentField = new JTextField(post.getContent());
                 JTextField timeField = new JTextField(post.getPostTime().toString());
+
                 JPanel panel = new JPanel(new GridLayout(0, 1));
                 panel.add(new JLabel("Platform:"));
                 panel.add(platformBox);
@@ -191,39 +219,37 @@ public class Dashboard extends JFrame {
                 panel.add(new JLabel("Time (HH:mm):"));
                 panel.add(timeField);
 
-                int result = JOptionPane.showConfirmDialog(
-                        Dashboard.this, panel, "Edit Post", JOptionPane.OK_CANCEL_OPTION);
-                if(result == JOptionPane.OK_OPTION){
-                    try{
+                int result = JOptionPane.showConfirmDialog(Dashboard.this, panel, "Edit Post", JOptionPane.OK_CANCEL_OPTION);
+                if (result == JOptionPane.OK_OPTION) {
+                    try {
                         String platform = (String) platformBox.getSelectedItem();
                         String content = contentField.getText();
                         java.time.LocalTime postTime = java.time.LocalTime.parse(timeField.getText());
 
-                        //update post
+                        // update post
                         post.setPlatform(platform);
                         post.setContent(content);
                         post.setPostTime(postTime);
 
-                        //refresh
+                        // refresh list
+                        listModel.set(index, "[EDITED] " + post.toString());
+                        savePostsToJson();
 
-                        listModel.set(index,"[EDITED] " + post.toString());
-
-                        JOptionPane.showMessageDialog(this, "Edited post"+ post.toString());
-
-
-
-                    }catch (Exception ex){
+                        JOptionPane.showMessageDialog(this, "Edited post: " + post.toString());
+                    } catch (Exception ex) {
                         JOptionPane.showMessageDialog(Dashboard.this, "Invalid input: " + ex.getMessage());
                     }
                 }
-            }else{
+            } else {
                 JOptionPane.showMessageDialog(this, "Please select a post to edit.");
             }
-
-
         });
 
+        // Theme switching
+        lightTheme.addActionListener(e -> applyTheme(Color.WHITE, Color.BLACK));
+        darkTheme.addActionListener(e -> applyTheme(new Color(45, 45, 45), Color.WHITE));
 
+        setVisible(true);
     }
 
     private void safeExit() {
@@ -238,9 +264,20 @@ public class Dashboard extends JFrame {
         }
     }
 
+    private void applyTheme(Color bg, Color fg) {
+        getContentPane().setBackground(bg);
+        statusLabel.setForeground(fg);
+        statusLabel.setBackground(bg);
+        repaint();
+    }
 
-
+    private void savePostsToJson() {
+        try {
+            java.nio.file.Path path = java.nio.file.Paths.get("posts.json");
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            mapper.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), scheduler.getPosts());
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Failed to save posts.json: " + ex.getMessage());
+        }
+    }
 }
-
-
-// edit add remove should also make action in posts.json
