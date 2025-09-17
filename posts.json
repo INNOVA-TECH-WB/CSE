@@ -1,17 +1,17 @@
-[
-  {
-    "Platform": "Instagram",
-    "Content": "GoodMorning !!!! #Sun",
-    "PostTime": "19:37"
-  },
-  {
-    "Platform": "TikTok",
-    "Content": "Here's our afternoon update.",
-    "PostTime": "20:00"
-  },
-  {
-    "Platform": "Facebook",
-    "Content": "Check out this cool video! #fun",
-    "PostTime": "17:26"
-  }
-]
+[ {
+  "platform" : "TikTok",
+  "content" : "My first scheduled post!",
+  "postTime" : "15:00"
+}, {
+  "platform" : "Instagram",
+  "content" : "My first scheduled post!",
+  "postTime" : "14:00"
+}, {
+  "platform" : "Facebook",
+  "content" : "testtesttest1",
+  "postTime" : "00:11"
+}, {
+  "platform" : "Instagram",
+  "content" : "test2",
+  "postTime" : "14:00"
+} ]

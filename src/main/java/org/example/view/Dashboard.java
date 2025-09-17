@@ -2,6 +2,7 @@ package org.example.view;
 
 import org.example.model.ScheduledPost;
 import org.example.service.DailyReportService;
+import org.example.service.PostProvider;
 import org.example.service.SchedulerService;
 
 import javax.swing.*;
@@ -12,20 +13,25 @@ import java.util.List;
 public class Dashboard extends JFrame {
     private final SchedulerService scheduler;
     private final DailyReportService reportService;
-    private final JLabel statusLabel; // status bar label
-    private final DefaultListModel<String> listModel; // shared list model
-    private final JList<String> postList; // list UI
+    private final PostProvider provider;
 
-    public Dashboard(List<ScheduledPost> posts, SchedulerService scheduler, DailyReportService reportService) {
+    private final JLabel statusLabel;
+    private final DefaultListModel<String> listModel;
+    private final JList<String> postList;
+
+    public Dashboard(List<ScheduledPost> posts,
+                     SchedulerService scheduler,
+                     DailyReportService reportService,
+                     PostProvider provider) {
         this.reportService = reportService;
         this.scheduler = scheduler;
+        this.provider = provider;
 
         setTitle("Social Media Scheduler Dashboard");
-        setSize(1920, 1024);
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // safe exit
+        setSize(1200, 700);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // ask confirmation when window closes
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
@@ -35,15 +41,13 @@ public class Dashboard extends JFrame {
 
         setLayout(new BorderLayout());
 
-        // --- POST LIST ---
+        // List
         listModel = new DefaultListModel<>();
-        for (ScheduledPost post : posts) {
-            listModel.addElement("[READY] " + post.toString());
-        }
+        for (ScheduledPost post : posts) listModel.addElement("[READY] " + post.toString());
         postList = new JList<>(listModel);
         add(new JScrollPane(postList), BorderLayout.CENTER);
 
-        // --- BUTTON PANEL ---
+        // Buttons
         JPanel buttonPanel = new JPanel();
         JButton startButton = new JButton("▶ Start Scheduler");
         JButton stopButton = new JButton("⏹ Stop Scheduler");
@@ -63,80 +67,61 @@ public class Dashboard extends JFrame {
         buttonPanel.add(editPostButton);
         buttonPanel.add(refreshButton);
 
-        // --- STATUS BAR ---
+        // Status bar
         statusLabel = new JLabel("Scheduler stopped", SwingConstants.LEFT);
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
         statusLabel.setForeground(Color.RED);
 
-        JPanel southPanel = new JPanel(new BorderLayout());
-        southPanel.add(buttonPanel, BorderLayout.CENTER);
-        southPanel.add(statusLabel, BorderLayout.SOUTH);
+        JPanel south = new JPanel(new BorderLayout());
+        south.add(buttonPanel, BorderLayout.CENTER);
+        south.add(statusLabel, BorderLayout.SOUTH);
+        add(south, BorderLayout.SOUTH);
 
-        add(southPanel, BorderLayout.SOUTH);
-
-        // --- MENU BAR ---
+        // Menu
         JMenuBar menubar = new JMenuBar();
 
-        // File menu
         JMenu fileMenu = new JMenu("File");
-        JMenuItem exitItem = new JMenuItem("Exit");
         JMenuItem reportItem = new JMenuItem("Generate Report");
+        JMenuItem exitItem = new JMenuItem("Exit");
         fileMenu.add(reportItem);
         fileMenu.add(exitItem);
 
-        // Settings menu
         JMenu settingsMenu = new JMenu("Settings");
-        JMenuItem clearItem = new JMenuItem("Clear Posts");
         JMenu themeMenu = new JMenu("Theme");
         JMenuItem lightTheme = new JMenuItem("Light Theme");
         JMenuItem darkTheme = new JMenuItem("Dark Theme");
         themeMenu.add(lightTheme);
         themeMenu.add(darkTheme);
         settingsMenu.add(themeMenu);
-        settingsMenu.add(clearItem);
 
-        // Help menu
         JMenu helpMenu = new JMenu("Help");
         JMenuItem aboutItem = new JMenuItem("About");
         helpMenu.add(aboutItem);
 
-        // Add menus
         menubar.add(fileMenu);
         menubar.add(settingsMenu);
         menubar.add(helpMenu);
         setJMenuBar(menubar);
 
-        // --- INITIAL STATES ---
+        // Initial button states
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
 
-        // --- ACTIONS ---
+        // Actions
         startButton.addActionListener(e -> {
             scheduler.start();
             startButton.setEnabled(false);
             stopButton.setEnabled(true);
-
-            listModel.clear();
-            for (ScheduledPost post : scheduler.getPosts()) {
-                listModel.addElement("[SCHEDULED] " + post.toString());
-            }
-            statusLabel.setText("Scheduler running...");
-            statusLabel.setForeground(new Color(0, 128, 0));
-            JOptionPane.showMessageDialog(this, "Scheduler started");
+            reloadList("[SCHEDULED] ");
+            setStatus("Scheduler running...", new Color(0,128,0));
         });
 
         stopButton.addActionListener(e -> {
             scheduler.stop();
             stopButton.setEnabled(false);
             startButton.setEnabled(true);
-
-            listModel.clear();
-            for (ScheduledPost post : scheduler.getPosts()) {
-                listModel.addElement("[STOPPED] " + post.toString());
-            }
-            statusLabel.setText("Scheduler stopped");
-            statusLabel.setForeground(Color.RED);
-            JOptionPane.showMessageDialog(this, "Scheduler stopped");
+            reloadList("[STOPPED] ");
+            setStatus("Scheduler stopped", Color.RED);
         });
 
         reportButton.addActionListener(e -> {
@@ -144,100 +129,85 @@ public class Dashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "Report generated");
         });
 
+        exitButton.addActionListener(e -> safeExit());
+
+        refreshButton.addActionListener(e -> {
+            reloadList("[REFRESHED] ");
+            JOptionPane.showMessageDialog(this, "Post list refreshed!");
+        });
+
+        // Add
         addPostButton.addActionListener(e -> {
-            JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok", "Instagram", "Facebook"});
-            JTextField timeField = new JTextField("14:00"); // default time
+            JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok","Instagram","Facebook"});
             JTextField contentField = new JTextField();
+            JTextField timeField = new JTextField("14:00");
 
-            JPanel panel = new JPanel(new GridLayout(0, 1));
-            panel.add(new JLabel("Platform:"));
-            panel.add(platformBox);
-            panel.add(new JLabel("Content:"));
-            panel.add(contentField);
-            panel.add(new JLabel("Time (HH:mm):"));
-            panel.add(timeField);
+            JPanel panel = new JPanel(new GridLayout(0,1));
+            panel.add(new JLabel("Platform:")); panel.add(platformBox);
+            panel.add(new JLabel("Content:"));  panel.add(contentField);
+            panel.add(new JLabel("Time (HH:mm):")); panel.add(timeField);
 
-            int result = JOptionPane.showConfirmDialog(Dashboard.this, panel, "Add New Post", JOptionPane.OK_CANCEL_OPTION);
+            int result = JOptionPane.showConfirmDialog(this, panel, "Add New Post", JOptionPane.OK_CANCEL_OPTION);
             if (result == JOptionPane.OK_OPTION) {
                 try {
                     String platform = (String) platformBox.getSelectedItem();
                     String content = contentField.getText();
-                    String timeText = timeField.getText();
+                    java.time.LocalTime postTime = java.time.LocalTime.parse(timeField.getText());
 
-                    java.time.LocalTime postTime = java.time.LocalTime.parse(timeText);
                     ScheduledPost newPost = new ScheduledPost(platform, content, postTime);
-
                     scheduler.getPosts().add(newPost);
                     scheduler.schedulePost(newPost);
-                    listModel.addElement("[SCHEDULED] " + newPost.toString());
+                    provider.saveScheduledPosts(scheduler.getPosts());
 
-                    savePostsToJson();
+                    listModel.addElement("[SCHEDULED] " + newPost.toString());
                     JOptionPane.showMessageDialog(this, "Added new post");
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(Dashboard.this, "Invalid input: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(this, "Invalid input: " + ex.getMessage());
                 }
             }
         });
 
-        exitButton.addActionListener(e -> safeExit());
-
-        refreshButton.addActionListener(e -> {
-            listModel.clear();
-            for (ScheduledPost post : scheduler.getPosts()) {
-                listModel.addElement("[REFRESHED] " + post.toString());
-            }
-            JOptionPane.showMessageDialog(this, "Post list refreshed!");
-        });
-
+        // Remove
         removePostButton.addActionListener(e -> {
-            int index = postList.getSelectedIndex();
-            if (index >= 0) {
-                ScheduledPost removed = scheduler.getPosts().remove(index);
-                listModel.remove(index);
-                savePostsToJson();
-                JOptionPane.showMessageDialog(this, "Removed post: " + removed.toString());
+            int idx = postList.getSelectedIndex();
+            if (idx >= 0) {
+                ScheduledPost removed = scheduler.getPosts().remove(idx);
+                listModel.remove(idx);
+                provider.saveScheduledPosts(scheduler.getPosts());
+                JOptionPane.showMessageDialog(this, "Removed post: " + removed);
             } else {
-                JOptionPane.showMessageDialog(this, "No post selected");
+                JOptionPane.showMessageDialog(this, "No post selected.");
             }
         });
 
+        // Edit
         editPostButton.addActionListener(e -> {
-            int index = postList.getSelectedIndex();
-            if (index >= 0) {
-                ScheduledPost post = scheduler.getPosts().get(index);
-                JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok", "Instagram", "Facebook"});
-                platformBox.setSelectedItem(post.getPlatform());
+            int idx = postList.getSelectedIndex();
+            if (idx >= 0) {
+                ScheduledPost post = scheduler.getPosts().get(idx);
 
+                JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok","Instagram","Facebook"});
+                platformBox.setSelectedItem(post.getPlatform());
                 JTextField contentField = new JTextField(post.getContent());
                 JTextField timeField = new JTextField(post.getPostTime().toString());
 
-                JPanel panel = new JPanel(new GridLayout(0, 1));
-                panel.add(new JLabel("Platform:"));
-                panel.add(platformBox);
-                panel.add(new JLabel("Content:"));
-                panel.add(contentField);
-                panel.add(new JLabel("Time (HH:mm):"));
-                panel.add(timeField);
+                JPanel panel = new JPanel(new GridLayout(0,1));
+                panel.add(new JLabel("Platform:")); panel.add(platformBox);
+                panel.add(new JLabel("Content:"));  panel.add(contentField);
+                panel.add(new JLabel("Time (HH:mm):")); panel.add(timeField);
 
-                int result = JOptionPane.showConfirmDialog(Dashboard.this, panel, "Edit Post", JOptionPane.OK_CANCEL_OPTION);
+                int result = JOptionPane.showConfirmDialog(this, panel, "Edit Post", JOptionPane.OK_CANCEL_OPTION);
                 if (result == JOptionPane.OK_OPTION) {
                     try {
-                        String platform = (String) platformBox.getSelectedItem();
-                        String content = contentField.getText();
-                        java.time.LocalTime postTime = java.time.LocalTime.parse(timeField.getText());
+                        post.setPlatform((String) platformBox.getSelectedItem());
+                        post.setContent(contentField.getText());
+                        post.setPostTime(java.time.LocalTime.parse(timeField.getText()));
 
-                        // update post
-                        post.setPlatform(platform);
-                        post.setContent(content);
-                        post.setPostTime(postTime);
-
-                        // refresh list
-                        listModel.set(index, "[EDITED] " + post.toString());
-                        savePostsToJson();
-
-                        JOptionPane.showMessageDialog(this, "Edited post: " + post.toString());
+                        listModel.set(idx, "[EDITED] " + post.toString());
+                        provider.saveScheduledPosts(scheduler.getPosts());
+                        JOptionPane.showMessageDialog(this, "Edited post: " + post);
                     } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(Dashboard.this, "Invalid input: " + ex.getMessage());
+                        JOptionPane.showMessageDialog(this, "Invalid input: " + ex.getMessage());
                     }
                 }
             } else {
@@ -245,11 +215,39 @@ public class Dashboard extends JFrame {
             }
         });
 
-        // Theme switching
+        // Theme
         lightTheme.addActionListener(e -> applyTheme(Color.WHITE, Color.BLACK));
-        darkTheme.addActionListener(e -> applyTheme(new Color(45, 45, 45), Color.WHITE));
+        darkTheme.addActionListener(e -> applyTheme(new Color(45,45,45), Color.WHITE));
+
+        // About
+        aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                "Core Scheduler Engine\nVersion 1.0\n© You"));
+
+        // File > Report/Exit
+        reportItem.addActionListener(e -> {
+            reportService.generateReport();
+            JOptionPane.showMessageDialog(this, "Report generated");
+        });
+        exitItem.addActionListener(e -> safeExit());
 
         setVisible(true);
+    }
+
+    private void reloadList(String prefix) {
+        listModel.clear();
+        for (ScheduledPost p : scheduler.getPosts()) listModel.addElement(prefix + p.toString());
+    }
+
+    private void setStatus(String text, Color color) {
+        statusLabel.setText(text);
+        statusLabel.setForeground(color);
+    }
+
+    private void applyTheme(Color bg, Color fg) {
+        getContentPane().setBackground(bg);
+        statusLabel.setBackground(bg);
+        statusLabel.setForeground(fg);
+        repaint();
     }
 
     private void safeExit() {
@@ -261,23 +259,6 @@ public class Dashboard extends JFrame {
             scheduler.stop();
             reportService.generateReport();
             System.exit(0);
-        }
-    }
-
-    private void applyTheme(Color bg, Color fg) {
-        getContentPane().setBackground(bg);
-        statusLabel.setForeground(fg);
-        statusLabel.setBackground(bg);
-        repaint();
-    }
-
-    private void savePostsToJson() {
-        try {
-            java.nio.file.Path path = java.nio.file.Paths.get("posts.json");
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            mapper.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), scheduler.getPosts());
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Failed to save posts.json: " + ex.getMessage());
         }
     }
 }

@@ -1,43 +1,36 @@
 package org.example.model;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalTime;
 
 public class ScheduledPost {
-    private String Platform;
-    private String Content;
-    private LocalTime PostTime;
-    public ScheduledPost(String Platform, String Content, LocalTime Time) {
-        this.Platform = Platform;
-        this.Content = Content;
-        this.PostTime = Time;
-    }
-    public String getPlatform() {
-        return Platform;
-    }
-    public String getContent() {
-        return Content;
+    private String platform;
+    private String content;
+
+    // Ensure HH:mm formatting in JSON
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime postTime;
+
+    // Jackson needs a no-args constructor
+    public ScheduledPost() { }
+
+    public ScheduledPost(String platform, String content, LocalTime postTime) {
+        this.platform = platform;
+        this.content = content;
+        this.postTime = postTime;
     }
 
-    public void setPlatform(String platform) {
-        Platform = platform;
-    }
-    public void setContent(String content) {
-        Content = content;
-    }
-    public void setPostTime(LocalTime postTime) {
-        PostTime = postTime;
-    }
+    public String getPlatform() { return platform; }
+    public void setPlatform(String platform) { this.platform = platform; }
 
-    //public LocalTime getTime() {
-      //  return PostTime;
-    //}
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+
+    public LocalTime getPostTime() { return postTime; }
+    public void setPostTime(LocalTime postTime) { this.postTime = postTime; }
+
     @Override
     public String toString() {
-        return "Post on " + Platform + " at " + PostTime + ": " + Content;
-    }
-
-
-    public LocalTime getPostTime() {
-        return PostTime;
+        return "Post on " + platform + " at " + postTime + ": " + content;
     }
 }
-
