@@ -1,23 +1,35 @@
 package org.example.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalTime;
+import java.io.Serializable;
+import java.util.UUID;
 
-public class ScheduledPost {
+public class ScheduledPost implements Serializable {
     private String platform;
     private String content;
+    private String id;
 
-    // Ensure HH:mm formatting in JSON
+
     @JsonFormat(pattern = "HH:mm")
     private LocalTime postTime;
 
-    // Jackson needs a no-args constructor
+    //its for json
     public ScheduledPost() { }
 
     public ScheduledPost(String platform, String content, LocalTime postTime) {
+        this.id = UUID.randomUUID().toString();
         this.platform = platform;
         this.content = content;
         this.postTime = postTime;
+    }
+
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getPlatform() { return platform; }

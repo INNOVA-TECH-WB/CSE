@@ -69,7 +69,7 @@ public class Dashboard extends JFrame {
 
         // Status bar
         statusLabel = new JLabel("Scheduler stopped", SwingConstants.LEFT);
-        statusLabel.setBorder(BorderFactory.createEmptyBorder(5,10,5,10));
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         statusLabel.setForeground(Color.RED);
 
         JPanel south = new JPanel(new BorderLayout());
@@ -108,12 +108,18 @@ public class Dashboard extends JFrame {
         stopButton.setEnabled(false);
 
         // Actions
+
+        darkTheme.addActionListener(e ->
+                applyTheme(new Color(30, 30, 30), new Color(220, 220, 220))
+        );
+
+
         startButton.addActionListener(e -> {
             scheduler.start();
             startButton.setEnabled(false);
             stopButton.setEnabled(true);
             reloadList("[SCHEDULED] ");
-            setStatus("Scheduler running...", new Color(0,128,0));
+            setStatus("Scheduler running...", new Color(0, 128, 0));
         });
 
         stopButton.addActionListener(e -> {
@@ -138,14 +144,17 @@ public class Dashboard extends JFrame {
 
         // Add
         addPostButton.addActionListener(e -> {
-            JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok","Instagram","Facebook"});
+            JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok", "Instagram", "Facebook"});
             JTextField contentField = new JTextField();
             JTextField timeField = new JTextField("14:00");
 
-            JPanel panel = new JPanel(new GridLayout(0,1));
-            panel.add(new JLabel("Platform:")); panel.add(platformBox);
-            panel.add(new JLabel("Content:"));  panel.add(contentField);
-            panel.add(new JLabel("Time (HH:mm):")); panel.add(timeField);
+            JPanel panel = new JPanel(new GridLayout(0, 1));
+            panel.add(new JLabel("Platform:"));
+            panel.add(platformBox);
+            panel.add(new JLabel("Content:"));
+            panel.add(contentField);
+            panel.add(new JLabel("Time (HH:mm):"));
+            panel.add(timeField);
 
             int result = JOptionPane.showConfirmDialog(this, panel, "Add New Post", JOptionPane.OK_CANCEL_OPTION);
             if (result == JOptionPane.OK_OPTION) {
@@ -186,15 +195,18 @@ public class Dashboard extends JFrame {
             if (idx >= 0) {
                 ScheduledPost post = scheduler.getPosts().get(idx);
 
-                JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok","Instagram","Facebook"});
+                JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok", "Instagram", "Facebook"});
                 platformBox.setSelectedItem(post.getPlatform());
                 JTextField contentField = new JTextField(post.getContent());
                 JTextField timeField = new JTextField(post.getPostTime().toString());
 
-                JPanel panel = new JPanel(new GridLayout(0,1));
-                panel.add(new JLabel("Platform:")); panel.add(platformBox);
-                panel.add(new JLabel("Content:"));  panel.add(contentField);
-                panel.add(new JLabel("Time (HH:mm):")); panel.add(timeField);
+                JPanel panel = new JPanel(new GridLayout(0, 1));
+                panel.add(new JLabel("Platform:"));
+                panel.add(platformBox);
+                panel.add(new JLabel("Content:"));
+                panel.add(contentField);
+                panel.add(new JLabel("Time (HH:mm):"));
+                panel.add(timeField);
 
                 int result = JOptionPane.showConfirmDialog(this, panel, "Edit Post", JOptionPane.OK_CANCEL_OPTION);
                 if (result == JOptionPane.OK_OPTION) {
@@ -217,7 +229,7 @@ public class Dashboard extends JFrame {
 
         // Theme
         lightTheme.addActionListener(e -> applyTheme(Color.WHITE, Color.BLACK));
-        darkTheme.addActionListener(e -> applyTheme(new Color(45,45,45), Color.WHITE));
+        darkTheme.addActionListener(e -> applyTheme(new Color(45, 45, 45), Color.WHITE));
 
         // About
         aboutItem.addActionListener(e -> JOptionPane.showMessageDialog(this,
@@ -247,9 +259,34 @@ public class Dashboard extends JFrame {
         getContentPane().setBackground(bg);
         statusLabel.setBackground(bg);
         statusLabel.setForeground(fg);
-        repaint();
-    }
 
+        postList.setBackground(bg.darker());
+        postList.setForeground(fg);
+
+        for (Component c : getContentPane().getComponents()) {
+            if (c instanceof JPanel panel) {
+                panel.setBackground(bg);
+                for (Component c2 : panel.getComponents()) {
+                    c2.setBackground(bg);
+                    c2.setForeground(fg);
+                }
+            }
+        }
+        repaint();
+
+
+        JMenuBar bar = getJMenuBar();
+        if (bar != null) {
+            bar.setBackground(bg.darker());
+            bar.setForeground(fg);
+            for (MenuElement element : bar.getSubElements()) {
+                updateMenuElement(element, bg, fg);
+            }
+        }
+
+
+
+    }
     private void safeExit() {
         int confirm = JOptionPane.showConfirmDialog(
                 this, "Are you sure you want to exit?\nFinal report will be generated.",
@@ -261,4 +298,14 @@ public class Dashboard extends JFrame {
             System.exit(0);
         }
     }
+
+    private void updateMenuElement(MenuElement element, Color bg, Color fg) {
+        Component c = element.getComponent();
+        c.setBackground(bg.darker());
+        c.setForeground(fg);
+        for (MenuElement sub : element.getSubElements()) {
+            updateMenuElement(sub, bg, fg);
+        }
+    }
+
 }
