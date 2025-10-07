@@ -8,7 +8,9 @@ import org.example.service.SchedulerService;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
+import java.io.File;
 import java.util.List;
+
 
 public class Dashboard extends JFrame {
     private final SchedulerService scheduler;
@@ -147,6 +149,30 @@ public class Dashboard extends JFrame {
             JComboBox<String> platformBox = new JComboBox<>(new String[]{"TikTok", "Instagram", "Facebook"});
             JTextField contentField = new JTextField();
             JTextField timeField = new JTextField("14:00");
+            JTextField videoField = new JTextField();
+            JTextField photoField = new JTextField();
+
+            JButton chooseVideoButton = new JButton("Choose Video");
+            chooseVideoButton.addActionListener(ev -> {
+                JFileChooser fileChooser = new JFileChooser();
+                if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    videoField.setText(fileChooser.getSelectedFile().getAbsolutePath());
+                    photoField.setText(""); // Clear photo field
+                }
+            });
+
+            JButton choosePhotoButton = new JButton("Choose Photo");
+            choosePhotoButton.addActionListener(ev -> {
+                JFileChooser fileChooser = new JFileChooser();
+                if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    photoField.setText(fileChooser.getSelectedFile().getAbsolutePath());
+                    videoField.setText(""); // Clear video field
+                }
+            });
+
+
+
+
 
             JPanel panel = new JPanel(new GridLayout(0, 1));
             panel.add(new JLabel("Platform:"));
@@ -155,6 +181,12 @@ public class Dashboard extends JFrame {
             panel.add(contentField);
             panel.add(new JLabel("Time (HH:mm):"));
             panel.add(timeField);
+            panel.add(new JLabel("Photo:"));
+            panel.add(photoField);
+            panel.add(choosePhotoButton);
+            panel.add(new JLabel("Video:"));
+            panel.add(videoField);
+            panel.add(chooseVideoButton);
 
             int result = JOptionPane.showConfirmDialog(this, panel, "Add New Post", JOptionPane.OK_CANCEL_OPTION);
             if (result == JOptionPane.OK_OPTION) {
@@ -164,6 +196,9 @@ public class Dashboard extends JFrame {
                     java.time.LocalTime postTime = java.time.LocalTime.parse(timeField.getText());
 
                     ScheduledPost newPost = new ScheduledPost(platform, content, postTime);
+                    newPost.setVideoPath(videoField.getText());
+                    newPost.setPhotoPath(photoField.getText());
+
                     scheduler.getPosts().add(newPost);
                     scheduler.schedulePost(newPost);
                     provider.saveScheduledPosts(scheduler.getPosts());
@@ -175,6 +210,7 @@ public class Dashboard extends JFrame {
                 }
             }
         });
+
 
         // Remove
         removePostButton.addActionListener(e -> {
@@ -189,7 +225,7 @@ public class Dashboard extends JFrame {
             }
         });
 
-        // Edit
+        // Edit (This part is not updated for brevity, but you would apply the same logic as "Add Post")
         editPostButton.addActionListener(e -> {
             int idx = postList.getSelectedIndex();
             if (idx >= 0) {

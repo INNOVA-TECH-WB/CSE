@@ -1,31 +1,15 @@
 [ {
   "platform" : "TikTok",
-  "content" : "My first scheduled post!",
-  "id" : null,
-  "postTime" : "15:00"
-}, {
-  "platform" : "Instagram",
-  "content" : "My first scheduled post!",
-  "id" : null,
-  "postTime" : "14:00"
-}, {
-  "platform" : "Facebook",
-  "content" : "testtesttest1",
-  "id" : null,
-  "postTime" : "00:11"
-}, {
-  "platform" : "Instagram",
-  "content" : "test2",
-  "id" : null,
-  "postTime" : "14:00"
-}, {
-  "platform" : "Facebook",
-  "content" : "uqejnfngjakdnkj",
-  "id" : null,
-  "postTime" : "14:00"
+  "content" : "test 1",
+  "id" : "ce082297-5a19-408a-bac9-0d674beebdd1",
+  "postTime" : "17:00",
+  "videoPath" : "",
+  "photoPath" : ""
 }, {
   "platform" : "TikTok",
-  "content" : "testtest3",
-  "id" : "9a0bb142-ca53-4987-9bd4-df07bd8ab578",
-  "postTime" : "19:00"
+  "content" : "test chemgaz pic",
+  "id" : "ddf7f621-5bcc-44c8-a3b7-b590d32a063c",
+  "postTime" : "14:00",
+  "videoPath" : "",
+  "photoPath" : "/Users/wiktorbaranowski/Downloads/ChatGPT Image 30 wrz 2025, 10_38_56.png"
 } ]

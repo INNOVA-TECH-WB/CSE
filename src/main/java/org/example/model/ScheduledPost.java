@@ -6,10 +6,17 @@ import java.time.LocalTime;
 import java.io.Serializable;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalTime;
+import java.io.Serializable;
+import java.util.UUID;
+
 public class ScheduledPost implements Serializable {
     private String platform;
     private String content;
     private String id;
+    private String VideoPath;
+    private String PhotoPath;
 
 
     @JsonFormat(pattern = "HH:mm")
@@ -23,6 +30,21 @@ public class ScheduledPost implements Serializable {
         this.platform = platform;
         this.content = content;
         this.postTime = postTime;
+    }
+
+    public String getVideoPath(){
+        return VideoPath;
+    }
+    public void setVideoPath(String videoPath){
+        VideoPath = videoPath;
+    }
+
+    public String getPhotoPath(){
+        return PhotoPath;
+    }
+
+    public void setPhotoPath(String photoPath){
+        PhotoPath = photoPath;
     }
 
     public String getId() {
@@ -41,8 +63,19 @@ public class ScheduledPost implements Serializable {
     public LocalTime getPostTime() { return postTime; }
     public void setPostTime(LocalTime postTime) { this.postTime = postTime; }
 
+
+
+
     @Override
     public String toString() {
-        return "Post on " + platform + " at " + postTime + ": " + content;
+        String mediaInfo = "";
+        if (VideoPath != null && !VideoPath.isEmpty()) {
+            mediaInfo = " [Video: " + VideoPath + "]";
+        } else if (PhotoPath != null && !PhotoPath.isEmpty()) {
+            mediaInfo = " [Photo: " + PhotoPath + "]";
+
+        }
+        return "Post on " + platform + " at " + postTime + ": " + content + mediaInfo;
+
     }
 }
