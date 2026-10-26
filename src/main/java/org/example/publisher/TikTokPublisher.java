@@ -15,6 +15,18 @@ public class TikTokPublisher implements PostPublisher {
     @Override
     public void publish(ScheduledPost post) {
 
+        // temp
+
+        //System.out.println("--- TikTok PUBLISHER TRIGGERED ---");
+        //System.out.println("Post Content: " + post.getContent());
+        //System.out.println("Video Path Received: " + post.getVideoPath());
+        //System.out.println("Photo Path Received: " + post.getPhotoPath());
+        //System.out.println("---------------------------------");
+
+
+
+        //
+
         String videoPath = post.getVideoPath();
         String photoPath = post.getPhotoPath();
 

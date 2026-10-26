@@ -28,7 +28,7 @@ public class Main {
         publishers.put("Facebook", new FacebookPublisher());
 
         DailyReportService reportService = new DailyReportService();
-        SchedulerService scheduler = new SchedulerService(posts, publishers, reportService);
+        SchedulerService scheduler = new SchedulerService(posts, publishers, reportService,provider);
 
         System.out.println("Press Start...");
         new Dashboard(posts, scheduler, reportService, provider);

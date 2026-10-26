@@ -1,15 +1,9 @@
 [ {
   "platform" : "TikTok",
-  "content" : "test 1",
-  "id" : "ce082297-5a19-408a-bac9-0d674beebdd1",
-  "postTime" : "17:00",
+  "content" : "testest1",
+  "id" : "0d7a31b9-241d-43c9-b624-0c02db729cdf",
+  "status" : "PUBLISHED",
+  "postTime" : "18:36",
   "videoPath" : "",
   "photoPath" : ""
-}, {
-  "platform" : "TikTok",
-  "content" : "test chemgaz pic",
-  "id" : "ddf7f621-5bcc-44c8-a3b7-b590d32a063c",
-  "postTime" : "14:00",
-  "videoPath" : "",
-  "photoPath" : "/Users/wiktorbaranowski/Downloads/ChatGPT Image 30 wrz 2025, 10_38_56.png"
 } ]

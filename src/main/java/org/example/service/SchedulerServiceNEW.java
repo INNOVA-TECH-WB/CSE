@@ -1,6 +1,7 @@
 package org.example.service;
 
 
+import org.example.model.PostStatus;
 import org.example.model.ScheduledPost;
 import org.example.model.PublishJob;
 import org.example.publisher.PostPublisher;
@@ -23,6 +24,8 @@ public class SchedulerServiceNEW {
     private final Map<String, PostPublisher> publisherMap;
     private final DailyReportService reportService;
     private final PostProvider postProvider;
+
+
 
     private Scheduler scheduler;
     private boolean running = false;

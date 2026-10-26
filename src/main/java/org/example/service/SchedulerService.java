@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.model.PostStatus;
 import org.example.model.ScheduledPost;
 import org.example.publisher.PostPublisher;
 
@@ -14,15 +15,17 @@ public class SchedulerService {
     private final List<ScheduledPost> posts;
     private final Map<String, PostPublisher> publisherMap;
     private final DailyReportService reportService;
+    private final PostProvider postProvider;
 
     private ScheduledExecutorService scheduler;
 
     public SchedulerService(List<ScheduledPost> posts,
                             Map<String, PostPublisher> publisherMap,
-                            DailyReportService reportService) {
+                            DailyReportService reportService,PostProvider postProvider) {
         this.posts = posts;
         this.publisherMap = publisherMap;
         this.reportService = reportService;
+        this.postProvider = postProvider;
     }
 
     public synchronized void start() {
@@ -31,11 +34,12 @@ public class SchedulerService {
         }
         // schedule all posts
         for (ScheduledPost post : posts) {
+            if(post.getStatus() == org.example.model.PostStatus.PENDING)
             schedulePost(post);
         }
         // schedule daily report at midnight
         long midnightDelay = computeDelay(LocalTime.MIDNIGHT);
-        scheduler.scheduleAtFixedRate(
+        scheduler.scheduleAtFixedRate(    // changes here
                 reportService::generateReport,
                 midnightDelay,
                 TimeUnit.DAYS.toMillis(1),
@@ -48,10 +52,9 @@ public class SchedulerService {
         if (scheduler == null || scheduler.isShutdown()) return;
         long initialDelay = computeDelay(post.getPostTime());
         long period = TimeUnit.DAYS.toMillis(1);
-        scheduler.scheduleAtFixedRate(
+        scheduler.schedule(
                 () -> postToPlatform(post),
                 initialDelay,
-                period,
                 TimeUnit.MILLISECONDS
         );
         System.out.println("Scheduled post: " + post + " in " + initialDelay / 1000 + " seconds");
@@ -71,11 +74,21 @@ public class SchedulerService {
 
     private void postToPlatform(ScheduledPost post) {
         PostPublisher publisher = publisherMap.get(post.getPlatform());
-        if (publisher != null) {
-            publisher.publish(post);
-            reportService.logPost(post);
-        } else {
-            System.out.println("No publisher found for platform: " + post.getPlatform());
+        try {
+            if (publisher != null) {
+                publisher.publish(post);
+                post.setStatus(org.example.model.PostStatus.PUBLISHED); // Change status
+                reportService.logPost(post);
+            } else {
+                throw new Exception("No publisher found for platform: " + post.getPlatform());
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to publish post " + post.getId() + ". Error: " + e.getMessage());
+            post.setStatus(org.example.model.PostStatus.FAILED); // Set status to FAILED
+        } finally {
+            // CRUCIAL: Save the updated list of posts with the new status
+            postProvider.saveScheduledPosts(posts);
+            // You'll also need to refresh the UI list to show the status change
         }
     }
 

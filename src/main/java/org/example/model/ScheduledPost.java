@@ -18,6 +18,8 @@ public class ScheduledPost implements Serializable {
     private String VideoPath;
     private String PhotoPath;
 
+    private PostStatus status = PostStatus.PENDING;
+
 
     @JsonFormat(pattern = "HH:mm")
     private LocalTime postTime;
@@ -31,6 +33,16 @@ public class ScheduledPost implements Serializable {
         this.content = content;
         this.postTime = postTime;
     }
+
+    public PostStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(PostStatus status) {
+        this.status = status;
+    }
+
+
 
     public String getVideoPath(){
         return VideoPath;
@@ -75,7 +87,7 @@ public class ScheduledPost implements Serializable {
             mediaInfo = " [Photo: " + PhotoPath + "]";
 
         }
-        return "Post on " + platform + " at " + postTime + ": " + content + mediaInfo;
+        return "[" + status + "]" + "Post on " + platform + " at " + postTime + ": " + content + mediaInfo;
 
     }
 }

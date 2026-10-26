@@ -54,4 +54,8 @@ public class DailyReportService {
 
         publishedPosts.clear(); // reset for the next day
     }
+
+    public boolean hasPublishedPosts() {
+        return !publishedPosts.isEmpty();
+    }
 }

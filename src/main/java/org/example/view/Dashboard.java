@@ -133,14 +133,25 @@ public class Dashboard extends JFrame {
         });
 
         reportButton.addActionListener(e -> {
-            reportService.generateReport();
-            JOptionPane.showMessageDialog(this, "Report generated");
+            if(reportService.hasPublishedPosts()){
+                reportService.generateReport();
+                JOptionPane.showMessageDialog(this, "Report has been generated");
+            }else {
+                JOptionPane.showMessageDialog(this, "No posts have been published today. Nothing to report yet.");
+            }
+
         });
 
         exitButton.addActionListener(e -> safeExit());
 
         refreshButton.addActionListener(e -> {
-            reloadList("[REFRESHED] ");
+            listModel.clear();
+            List<ScheduledPost> freshPosts =provider.getScheduledPosts();
+            for (ScheduledPost post : freshPosts) {
+                listModel.addElement(post.toString());
+            }
+            scheduler.getPosts().clear();
+            scheduler.getPosts().addAll(freshPosts);
             JOptionPane.showMessageDialog(this, "Post list refreshed!");
         });
 
